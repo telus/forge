@@ -23,6 +23,13 @@
 import argparse
 from subprocess import call
 
+
+def install_with_apt_get(packages):
+    """ Installs packages with apt-get """
+    for package in packages:
+        call(['apt-get', 'install', '-y', package])
+
+
 def install_with_pip(packages):
     """ Installs packages with pip """
     for package in packages:
@@ -251,6 +258,7 @@ def get_credentials():
 
 def preconfigure():
     """ Configure everything needed to configure everything else. """
+    install_with_apt_get(['libssl-dev', 'libffi-dev'])
     install_with_pip(['ansible', 'awscli', 'boto'])
     configure_ansible()
     configure_environment()
