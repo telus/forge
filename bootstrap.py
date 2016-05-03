@@ -46,13 +46,19 @@ def shell_style(name):
 
 
 def download_from_s3(source, destination):
-    """ Downloads a file from an S3 bucket """
+    """ Downloads a file from a S3 bucket """
     call("aws s3 cp --region {region} s3://{bucket}/{file} {save_to}".format(
         region=detect('ForgeRegion'),
         bucket=detect('ForgeBucket'),
         file=source,
         save_to=destination
     ), shell=True)
+
+
+def download_directory_from_s3(source, destination):
+    """ Downloads a directory from a S3 bucket """
+    source = 's3://' + detect('ForgeBucket') + '/' + source
+    call(['aws', 's3', 'cp', '--recursive', '--region', detect('ForgeRegion'), source, destination])
 
 
 def instance_metadata(item):
@@ -152,14 +158,12 @@ def playbook_directory(playbook):
       directory = 'base'
     else:
       directory = flat_path(playbook.strip('/'))
-
     directory = os.path.join(os.sep, 'tmp', directory)
     try:
       os.stat(directory)
     except:
       os.makedirs(directory) 
-
-    return os.path.join(directory, '')
+    return os.path.join(directory, '') # returns with tailing slash
 
 
 def get_dependencies(playbook):
@@ -180,6 +184,13 @@ def get_vault(playbook):
         download_from_s3(playbook + 'vault.yml', vault_file)
     with open('/etc/ansible/hosts', 'a') as stream:
         stream.writelines(["\n[" + vault_name + "]\n", 'localhost\n'])
+
+def get_templates(playbook):
+    """ Downloads playbook templates """
+    path = playbook_directory(playbook)
+    if not args.skip_download:
+        download_directory_from_s3(playbook + 'templates', path + 'templates')
+      
 
 def configure_environment():
     """ Exposes information from Resource Tags in Ansible vars """
@@ -292,6 +303,7 @@ def self_provision():
     for playbook in applicable_playbooks():
         get_dependencies(playbook)
         get_vault(playbook)
+        get_templates(playbook)
         execute(playbook)
 
 parser = argparse.ArgumentParser()
