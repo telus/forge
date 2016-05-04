@@ -46,7 +46,7 @@ def shell_style(name):
 
 
 def download_from_s3(source, destination):
-    """ Downloads a file from a S3 bucket """
+    """ Downloads a file from an S3 bucket """
     call("aws s3 cp --region {region} s3://{bucket}/{file} {save_to}".format(
         region=detect('ForgeRegion'),
         bucket=detect('ForgeBucket'),
@@ -56,7 +56,7 @@ def download_from_s3(source, destination):
 
 
 def download_directory_from_s3(source, destination):
-    """ Downloads a directory from a S3 bucket """
+    """ Downloads a directory from an S3 bucket """
     source = 's3://' + detect('ForgeBucket') + '/' + source
     call(['aws', 's3', 'cp', '--recursive', '--region', detect('ForgeRegion'), source, destination])
 
