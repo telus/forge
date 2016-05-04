@@ -125,9 +125,18 @@ def unique(enumerable):
 
 def applicable_playbooks():
     """ Returns a list of playbooks that should be applied to this system """
-    playbooks = ['']                  # Base Playbook
-    playbooks.append(project_path())  # Project Playbook
-    playbooks.extend(role_paths())    # System Roles
+    playbooks = [] 
+
+    # Base Playbook
+    if not args.skip_base_playbook:
+      playbooks = ['']                  
+
+    # Project Playbook
+    if not args.skip_project_playbook:
+      playbooks.append(project_path())
+
+    # System Roles Playbook
+    playbooks.extend(role_paths())
     return sorted(unique(playbooks), key=len)
 
 
@@ -251,6 +260,8 @@ def get_credentials():
 
 def preconfigure():
     """ Configure everything needed to configure everything else. """
+    if args.skip_preconfigure:
+      return
     install_with_pip(['ansible', 'awscli', 'boto'])
     configure_ansible()
     configure_environment()
@@ -261,23 +272,17 @@ def preconfigure():
 
 def self_provision():
     """ Bring it all together and follow your dreams, little server! """
-    if not args.skip_preconfigure:
-        preconfigure()
+    preconfigure()
     for playbook in applicable_playbooks():
-        if not playbook and args.skip_core_playbook:
-            continue
-        if playbook == project_path() and args.skip_base_playbook:
-            continue
         get_dependencies(playbook)
         get_vault(playbook)
         execute(playbook)
 
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--skip-preconfigure', action='store_true', help='Skip configuration')
-parser.add_argument('--skip-core-playbook', action='store_true', help='Skip core playbook');
+parser.add_argument('--skip-preconfigure', action='store_true', help='Skip pre-configuration')
 parser.add_argument('--skip-base-playbook', action='store_true', help='Skip base playbook');
-parser.add_argument('--skip-download', action='store_true', help='Skip download, so you can test the playbook in /tmp');
+parser.add_argument('--skip-project-playbook', action='store_true', help='Skip project playbook');
+parser.add_argument('--skip-download', action='store_true', help='Skip download, so you can test the playbooks in /tmp');
 args = parser.parse_args()
 
 self_provision()
