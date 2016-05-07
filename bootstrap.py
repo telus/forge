@@ -155,14 +155,12 @@ def playbook_directory(playbook):
     """ construct a directory from playbook """
     import os
     if len(playbook) == 0:
-      directory = 'base'
+        directory = 'base'
     else:
-      directory = flat_path(playbook.strip('/'))
+        directory = flat_path(playbook.strip('/'))
     directory = os.path.join(os.sep, 'tmp', directory)
-    try:
-      os.stat(directory)
-    except:
-      os.makedirs(directory) 
+    if not os.path.isdir(directory):
+        os.makedirs(directory) 
     return os.path.join(directory, '') # returns with tailing slash
 
 
@@ -187,9 +185,13 @@ def get_vault(playbook):
 
 def get_templates(playbook):
     """ Downloads playbook templates """
-    path = playbook_directory(playbook)
+    import os
+    import shutil
+    path = playbook_directory(playbook) + 'templates'
     if not args.skip_download:
-        download_directory_from_s3(playbook + 'templates', path + 'templates')
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        download_directory_from_s3(playbook + 'templates', path)
       
 
 def configure_environment():
