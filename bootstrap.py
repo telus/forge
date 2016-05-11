@@ -55,6 +55,12 @@ def download_from_s3(source, destination):
     ), shell=True)
 
 
+def download_directory_from_s3(source, destination):
+    """ Downloads a directory from an S3 bucket """
+    source = 's3://' + detect('ForgeBucket') + '/' + source
+    call(['aws', 's3', 'cp', '--recursive', '--region', detect('ForgeRegion'), source, destination])
+
+
 def instance_metadata(item):
     """ Returns information about the current instance from EC2 Instace API """
     import httplib
@@ -145,10 +151,22 @@ def flat_path(path):
     import re
     return re.sub('/', '-', path)
 
+def playbook_directory(playbook):
+    """ construct a directory from playbook """
+    import os
+    if len(playbook) == 0:
+        directory = 'base'
+    else:
+        directory = flat_path(playbook.strip('/'))
+    directory = os.path.join(os.sep, 'tmp', directory)
+    if not os.path.isdir(directory):
+        os.makedirs(directory) 
+    return os.path.join(directory, '') # returns with tailing slash
+
 
 def get_dependencies(playbook):
     """ Downloads and installs all roles required for a playbook to run """
-    path = '/tmp/' + flat_path(playbook)
+    path = playbook_directory(playbook)
     if not args.skip_download:
         download_from_s3(playbook + 'dependencies.yml', path + 'dependencies.yml')
     call('ansible-galaxy install -ifr' + path + 'dependencies.yml', shell=True)
@@ -165,6 +183,17 @@ def get_vault(playbook):
     with open('/etc/ansible/hosts', 'a') as stream:
         stream.writelines(["\n[" + vault_name + "]\n", 'localhost\n'])
 
+def get_templates(playbook):
+    """ Downloads playbook templates """
+    import os
+    import shutil
+    path = playbook_directory(playbook) + 'templates'
+    if not args.skip_download:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        download_directory_from_s3(playbook + 'templates', path)
+      
+
 def configure_environment():
     """ Exposes information from Resource Tags in Ansible vars """
     get_vault('')
@@ -176,14 +205,14 @@ def configure_environment():
 
 def record_exit(playbook, exit_status):
     """ Saves exit status of playbook for notfication purposes"""
-    playbook_name = '/tmp/' + flat_path(playbook + 'playbook' + '.status')
+    playbook_name = playbook_directory(playbook) + 'playbook' + '.status'
     with open(playbook_name, 'w+') as stream:
         stream.write(str(exit_status))
 
 
 def execute(playbook):
     """ Downloads and executes a playbook. """
-    path = '/tmp/' + flat_path(playbook)
+    path = playbook_directory(playbook)
     for hook in ['pre-', '', 'post-']:
         filename = hook + 'playbook.yml'
         if not args.skip_download:
@@ -276,6 +305,7 @@ def self_provision():
     for playbook in applicable_playbooks():
         get_dependencies(playbook)
         get_vault(playbook)
+        get_templates(playbook)
         execute(playbook)
 
 parser = argparse.ArgumentParser()
