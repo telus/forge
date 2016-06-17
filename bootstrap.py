@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import print_function
 import argparse
 from subprocess import call
 
@@ -131,11 +132,11 @@ def unique(enumerable):
 
 def applicable_playbooks():
     """ Returns a list of playbooks that should be applied to this system """
-    playbooks = [] 
+    playbooks = []
 
     # Base Playbook
     if not args.skip_base_playbook:
-      playbooks = ['']                  
+      playbooks = ['']
 
     # Project Playbook
     if not args.skip_project_playbook:
@@ -143,6 +144,7 @@ def applicable_playbooks():
 
     # System Roles Playbook
     playbooks.extend(role_paths())
+
     return sorted(unique(playbooks), key=len)
 
 
@@ -160,7 +162,7 @@ def playbook_directory(playbook):
         directory = flat_path(playbook.strip('/'))
     directory = os.path.join(os.sep, 'tmp', directory)
     if not os.path.isdir(directory):
-        os.makedirs(directory) 
+        os.makedirs(directory)
     return os.path.join(directory, '') # returns with tailing slash
 
 
@@ -192,7 +194,7 @@ def get_templates(playbook):
         if os.path.isdir(path):
             shutil.rmtree(path)
         download_directory_from_s3(playbook + 'templates', path)
-      
+
 
 def configure_environment():
     """ Exposes information from Resource Tags in Ansible vars """
@@ -217,8 +219,13 @@ def execute(playbook):
         filename = hook + 'playbook.yml'
         if not args.skip_download:
             download_from_s3(playbook + filename, path + filename)
-        exit_status = call('ansible-playbook ' + path + filename, shell=True)
-        record_exit(playbook, exit_status)
+        # Avoid 'file not found' messages from ansible-playbook
+        import os.path
+        if os.path.isfile(path + filename):
+            exit_status = call('ansible-playbook ' + path + filename, shell=True)
+            record_exit(playbook, exit_status)
+        else:
+            print('%s file not found, so not executed with ansible-playbook' % (path + filename))
 
 def ssh_keyscan(host):
     """ Get the SSH host key from a remote server by connecting to it """
@@ -312,6 +319,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--skip-preconfigure', action='store_true', help='Skip pre-configuration')
 parser.add_argument('--skip-base-playbook', action='store_true', help='Skip base playbook');
 parser.add_argument('--skip-project-playbook', action='store_true', help='Skip project playbook');
+parser.add_argument('--skip-role-playbook', action='store_true', help='Skip role playbook');
 parser.add_argument('--skip-download', action='store_true', help='Skip download, so you can test the playbooks in /tmp');
 args = parser.parse_args()
 
