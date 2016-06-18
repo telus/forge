@@ -143,7 +143,8 @@ def applicable_playbooks():
       playbooks.append(project_path())
 
     # System Roles Playbook
-    playbooks.extend(role_paths())
+    if not args.skip_role_playbook:
+      playbooks.extend(role_paths())
 
     return sorted(unique(playbooks), key=len)
 
