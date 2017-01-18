@@ -299,7 +299,7 @@ def preconfigure():
     """ Configure everything needed to configure everything else. """
     if args.skip_preconfigure:
       return
-    install_with_pip(['ansible', 'awscli', 'boto'])
+    install_with_pip(['ansible==2.2.0.0', 'awscli', 'boto'])
     configure_ansible()
     configure_environment()
     get_credentials()
