@@ -63,13 +63,10 @@ def download_directory_from_s3(source, destination):
 
 def instance_metadata(item):
     """ Returns information about the current instance from EC2 Instace API """
-    import httplib
-    api = httplib.HTTPConnection('169.254.169.254')
-    api.request('GET', '/latest/meta-data/' + item)
-    metadata = api.getresponse().read()
-    api.close()
-    return metadata
-
+    import httplib2
+    h = httplib2.Http(".cache")
+    resp, content = h.request("http://169.254.169.254/latest/meta-data/{}".format(item), "GET")
+    return content
 
 def instance_id():
     """ Returns the ID of the current instance """
@@ -299,7 +296,7 @@ def preconfigure():
     if args.skip_preconfigure:
       return
     # install pip 'cause python 3 doesn't come with it
-    install_with_pip(['ansible==2.2.0.0', 'boto'])
+    install_with_pip(['ansible==2.2.0.0'])
     configure_ansible()
     configure_environment()
     get_credentials()
