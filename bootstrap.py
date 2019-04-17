@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2015 Chris Olstrom <chris@olstrom.com>
 #
@@ -20,14 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import print_function
 import argparse
 from subprocess import call
 
 def install_with_pip(packages):
     """ Installs packages with pip """
     for package in packages:
-        call('pip install -U ' + package, shell=True)
+        call('sudo -H python3 -m pip install -U ' + package, shell=True)
 
 
 def detect(setting):
@@ -273,7 +272,7 @@ def configure_ansible():
     download_from_s3('ansible.cfg', '/etc/ansible/ansible.cfg')
     download_from_s3('vault.key', '/etc/ansible/vault.key')
     files = ['/etc/ansible/ansible.cfg', '/etc/ansible/vault.key']
-    set_permissions(files, 0400)
+    set_permissions(files, '0400')
     add_to_known_hosts(ssh_host_key('github.com'))
     add_to_known_hosts(ssh_host_key('bitbucket.org'))
 
@@ -283,7 +282,7 @@ def set_permissions(files, mode):
     from os import chmod
     for filename in files:
         try:
-            chmod(filename, mode)
+            chmod(filename, int(mode))
         except OSError:
             pass
 
@@ -292,19 +291,20 @@ def get_credentials():
     """ Fetches credentials needed for private repositories """
     download_from_s3('ssh.ed25519', '/root/.ssh/id_ed25519')
     download_from_s3('ssh.rsa', '/root/.ssh/id_rsa')
-    set_permissions(['/root/.ssh/id_ed25519', '/root/.ssh/id_rsa'], 0400)
+    set_permissions(['/root/.ssh/id_ed25519', '/root/.ssh/id_rsa'], '0400')
 
 
 def preconfigure():
     """ Configure everything needed to configure everything else. """
     if args.skip_preconfigure:
       return
-    install_with_pip(['ansible==2.2.0.0', 'awscli', 'boto'])
+    # install pip 'cause python 3 doesn't come with it
+    install_with_pip(['ansible==2.2.0.0', 'boto'])
     configure_ansible()
     configure_environment()
     get_credentials()
     download_from_s3('bin/reforge', '/usr/local/sbin/reforge')
-    set_permissions(['/usr/local/sbin/reforge'], 0500)
+    set_permissions(['/usr/local/sbin/reforge'], '0500')
 
 
 def self_provision():
