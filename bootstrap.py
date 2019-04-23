@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import re
 import argparse
+import httplib2
 from subprocess import call
 
 def install_with_pip(packages):
@@ -31,7 +34,6 @@ def install_with_pip(packages):
 
 def detect(setting):
     """ Detects a setting in tags, falls back to environment variables """
-    import os
     if setting in resource_tags():
         return resource_tags()[setting]
     else:
@@ -41,7 +43,6 @@ def detect(setting):
 def shell_style(name):
     """ Translates reasonable names into names you would expect for environment
     variables. Example: 'ForgeRegion' becomes 'FORGE_REGION' """
-    import re
     return re.sub('(?!^)([A-Z]+)', r'_\1', name).upper()
 
 
@@ -63,7 +64,6 @@ def download_directory_from_s3(source, destination):
 
 def instance_metadata(item):
     """ Returns information about the current instance from EC2 Instace API """
-    import httplib2
     h = httplib2.Http(".cache")
     resp, content = h.request("http://169.254.169.254/latest/meta-data/{}".format(item), "GET")
     return content
@@ -75,15 +75,31 @@ def instance_id():
 
 def region():
     """ Returns the region the current instance is located in """
-    return instance_metadata('placement/availability-zone')[:-1]
+    return instance_metadata('placement/availability-zone')[:-1].decode('utf-8')
 
+
+def make_tag_dict(ec2_object):
+  '''Given an tagable ec2_object, return dictionary of existing tags.'''
+
+  tag_dict = {}
+  if ec2_object.tags is None: return tag_dict
+  for tag in ec2_object.tags:
+      tag_dict[tag['Key']] = tag['Value']
+  return tag_dict
 
 def resource_tags():
     """ Returns a dictionary of all resource tags for the current instance """
-    import boto.ec2
-    api = boto.ec2.connect_to_region(region())
-    tags = api.get_all_tags(filters={'resource-id': instance_id()})
-    return {tag.name: tag.value for tag in tags}
+    import boto3
+    ec2 = boto3.resource('ec2', region_name=region())
+    instance = ec2.Instance(str(instance_id()))
+    print(instance)
+    tags = make_tag_dict(instance)
+    print(tags)
+#    api = boto.ec2.connect_to_region(region())
+#    import code
+#    code.interact(local=locals())
+#    tags = api.get_all_tags(filters={'resource-id': instance_id()})
+#    return {tag.name: tag.value for tag in tags}
 
 
 def security_groups():
@@ -93,7 +109,6 @@ def security_groups():
 
 def infer_tags(security_group):
     """ Attempts to infer tags from a security group name """
-    import re
     matches = re.search(r'(?P<Project>[\w-]+)-(?P<Role>\w+)$', security_group)
     return matches.groupdict()
 
@@ -224,10 +239,11 @@ def execute(playbook):
         else:
             print('%s file not found, so not executed with ansible-playbook' % (path + filename))
 
+
 def ssh_keyscan(host):
     """ Get the SSH host key from a remote server by connecting to it """
-    from paramiko import transport
-    with transport.Transport(host) as ssh:
+    import paramiko
+    with paramiko.transport.Transport(host) as ssh:
         ssh.start_client()
         return ssh.get_remote_server_key()
 
@@ -245,8 +261,7 @@ def ssh_host_key(host, port=22):
 
 def in_known_hosts(host_key):
     """ Checks if a key is in known_hosts """
-    from os import path
-    if not path.isfile('/etc/ssh/ssh_known_hosts'):
+    if not os.path.isfile('/etc/ssh/ssh_known_hosts'):
         return False
     with open('/etc/ssh/ssh_known_hosts', 'r') as known_hosts:
         for entry in known_hosts:
@@ -276,10 +291,9 @@ def configure_ansible():
 
 def set_permissions(files, mode):
     """ Sets permissions on a list of files """
-    from os import chmod
     for filename in files:
         try:
-            chmod(filename, int(mode))
+            os.chmod(filename, int(mode))
         except OSError:
             pass
 
@@ -322,3 +336,4 @@ parser.add_argument('--skip-download', action='store_true', help='Skip download,
 args = parser.parse_args()
 
 self_provision()
+
