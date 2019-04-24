@@ -89,18 +89,10 @@ def make_tag_dict(ec2_object):
 
 def resource_tags():
     """ Returns a dictionary of all resource tags for the current instance """
-    import boto3
-    ec2 = boto3.resource('ec2', region_name=region())
-    instance = ec2.Instance(str(instance_id()))
-    print(instance)
-    tags = make_tag_dict(instance)
-    print(tags)
-#    api = boto.ec2.connect_to_region(region())
-#    import code
-#    code.interact(local=locals())
-#    tags = api.get_all_tags(filters={'resource-id': instance_id()})
-#    return {tag.name: tag.value for tag in tags}
-
+    call("aws ec2 describe-tags --region {region} --filters \"Name=resource-id,Values={instance_id}\"".format(
+        region=detect('ForgeRegion'),
+        instance_id = instance_id()
+    ), shell=True)
 
 def security_groups():
     """ Returns a list of sercurity groups for the current instance """
