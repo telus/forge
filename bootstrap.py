@@ -24,7 +24,8 @@ import os
 import re
 import argparse
 import httplib2
-from subprocess import call
+from subprocess import call, check_output
+import json
 
 def install_with_pip(packages):
     """ Installs packages with pip """
@@ -87,12 +88,18 @@ def make_tag_dict(ec2_object):
       tag_dict[tag['Key']] = tag['Value']
   return tag_dict
 
+
 def resource_tags():
     """ Returns a dictionary of all resource tags for the current instance """
-    call("aws ec2 describe-tags --region {region} --filters \"Name=resource-id,Values={instance_id}\"".format(
-        region=detect('ForgeRegion'),
-        instance_id = instance_id()
-    ), shell=True)
+    result_bytes = check_output(
+        "aws ec2 describe-tags --region {region} --filters \"Name=resource-id,Values={instance_id}\"".format(
+            region=region(),
+            instance_id=(str(instance_id(), "UTF-8"))
+        ), shell=True)
+
+    result_dict = json.loads(result_bytes.decode("UTF-8"))
+    return result_dict
+
 
 def security_groups():
     """ Returns a list of sercurity groups for the current instance """
