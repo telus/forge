@@ -35,7 +35,6 @@ def install_with_pip(packages):
 
 def detect(setting):
     """ Detects a setting in tags, falls back to environment variables """
-    print("Detecting", setting, resource_tags())
     if setting in resource_tags():
         return resource_tags()[setting]
     else:
