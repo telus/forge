@@ -97,8 +97,12 @@ def resource_tags():
             instance_id=(str(instance_id(), "UTF-8"))
         ), shell=True)
 
-    result_dict = json.loads(result_bytes.decode("UTF-8"))
-    return result_dict
+    aws_tags = json.loads(result_bytes.decode("UTF-8")).get("Tags")
+    resource_tags_dict = {}
+    for entry in aws_tags:
+      resource_tags_dict[entry.get("Key")] = entry.get("Value")
+
+    return resource_tags_dict
 
 
 def security_groups():
