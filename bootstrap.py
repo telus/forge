@@ -98,10 +98,12 @@ def resource_tags():
         ), shell=True)
 
     aws_tags = json.loads(result_bytes.decode("UTF-8")).get("Tags")
+    print("aws_tags", aws_tags)
     resource_tags_dict = {}
     for entry in aws_tags:
       resource_tags_dict[entry.get("Key")] = entry.get("Value")
 
+    print("resource_tags_dict", resource_tags_dict)
     return resource_tags_dict
 
 
