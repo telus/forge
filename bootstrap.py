@@ -79,16 +79,6 @@ def region():
     return instance_metadata('placement/availability-zone')[:-1].decode('utf-8')
 
 
-def make_tag_dict(ec2_object):
-  '''Given an tagable ec2_object, return dictionary of existing tags.'''
-
-  tag_dict = {}
-  if ec2_object.tags is None: return tag_dict
-  for tag in ec2_object.tags:
-      tag_dict[tag['Key']] = tag['Value']
-  return tag_dict
-
-
 def resource_tags():
     """ Returns a dictionary of all resource tags for the current instance """
     result_bytes = check_output(
