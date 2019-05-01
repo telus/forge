@@ -25,8 +25,7 @@ _Forge is only tested against Amazon Web Services (AWS)._
 Forge will fulfill its own dependencies, if `pip` is available. If it is not, the following python packages must be available.
 
 * [ansible](https://github.com/ansible/ansible/)
-* [awscli](https://aws.amazon.com/cli/)
-* [boto](https://boto.readthedocs.org/)
+* [awscli](https://aws.amazon.com/cli/) which needs to be provided by the system
 
 ## Compatibility
 
