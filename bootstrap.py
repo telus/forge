@@ -24,13 +24,13 @@ import os
 import re
 import argparse
 import httplib2
-from subprocess import call, check_output
+import subprocess
 import json
 
 def install_with_pip(packages):
     """ Installs packages with pip """
     for package in packages:
-        call('sudo -H python3 -m pip install -U ' + package, shell=True)
+        subprocess.call('sudo -H python3 -m pip install -U ' + package, shell=True)
 
 
 def detect(setting):
@@ -49,7 +49,7 @@ def shell_style(name):
 
 def download_from_s3(source, destination):
     """ Downloads a file from an S3 bucket """
-    call("aws s3 cp --region {region} s3://{bucket}/{file} {save_to}".format(
+    subprocess.call("aws s3 cp --region {region} s3://{bucket}/{file} {save_to}".format(
         region=detect('ForgeRegion'),
         bucket=detect('ForgeBucket'),
         file=source,
@@ -60,7 +60,7 @@ def download_from_s3(source, destination):
 def download_directory_from_s3(source, destination):
     """ Downloads a directory from an S3 bucket """
     source = 's3://' + detect('ForgeBucket') + '/' + source
-    call(['aws', 's3', 'cp', '--recursive', '--region', detect('ForgeRegion'), source, destination])
+    subprocess.call(['aws', 's3', 'cp', '--recursive', '--region', detect('ForgeRegion'), source, destination])
 
 
 def instance_metadata(item):
@@ -186,7 +186,7 @@ def get_dependencies(playbook):
     path = playbook_directory(playbook)
     if not args.skip_download:
         download_from_s3(playbook + 'dependencies.yml', path + 'dependencies.yml')
-    call('ansible-galaxy install -ifr' + path + 'dependencies.yml', shell=True)
+    subprocess.call('ansible-galaxy install -ifr' + path + 'dependencies.yml', shell=True)
 
 
 def get_vault(playbook):
@@ -237,7 +237,7 @@ def execute(playbook):
         # Avoid 'file not found' messages from ansible-playbook
         import os.path
         if os.path.isfile(path + filename):
-            exit_status = call('ansible-playbook ' + path + filename, shell=True)
+            exit_status = subprocess.call('ansible-playbook ' + path + filename, shell=True)
             record_exit(playbook, exit_status)
         else:
             print('%s file not found, so not executed with ansible-playbook' % (path + filename))
