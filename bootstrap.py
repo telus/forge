@@ -81,7 +81,7 @@ def region():
 
 def resource_tags():
     """ Returns a dictionary of all resource tags for the current instance """
-    result_bytes = check_output(
+    result_bytes = subprocess.check_output(
         "aws ec2 describe-tags --region {region} --filters \"Name=resource-id,Values={instance_id}\"".format(
             region=region(),
             instance_id=(str(instance_id(), "UTF-8"))
