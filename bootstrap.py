@@ -312,7 +312,6 @@ def preconfigure():
     """ Configure everything needed to configure everything else. """
     if args.skip_preconfigure:
       return
-    # install pip 'cause python 3 doesn't come with it
     install_with_pip(['ansible==2.2.0.0'])
     configure_ansible()
     configure_environment()
@@ -332,10 +331,10 @@ def self_provision():
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--skip-preconfigure', action='store_true', help='Skip pre-configuration')
-parser.add_argument('--skip-base-playbook', action='store_true', help='Skip base playbook');
-parser.add_argument('--skip-project-playbook', action='store_true', help='Skip project playbook');
-parser.add_argument('--skip-role-playbook', action='store_true', help='Skip role playbook');
-parser.add_argument('--skip-download', action='store_true', help='Skip download, so you can test the playbooks in /tmp');
+parser.add_argument('--skip-base-playbook', action='store_true', help='Skip base playbook')
+parser.add_argument('--skip-project-playbook', action='store_true', help='Skip project playbook')
+parser.add_argument('--skip-role-playbook', action='store_true', help='Skip role playbook')
+parser.add_argument('--skip-download', action='store_true', help='Skip download, so you can test the playbooks in /tmp')
 args = parser.parse_args()
 
 self_provision()
