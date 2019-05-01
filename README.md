@@ -1,5 +1,9 @@
 # forge
 
+### IMPORTANT NOTE
+The telus/forge tooling is deprecated.
+The only activity of this repository is related to bug fixing and maintainence.
+
 [![Code Climate](https://codeclimate.com/github/telusdigital/forge/badges/gpa.svg)](https://codeclimate.com/github/telusdigital/forge)
 
 Convention Driven Instance Autonomy
@@ -14,7 +18,7 @@ Forge is designed to facilitate autonomous server configuration. At first boot, 
 * Install any Ansible roles those playbooks depend on.
 * Apply any playbooks downloaded in this way.
 
-_Forge is only actively tested against Amazon Web Services (AWS)._
+_Forge is only tested against Amazon Web Services (AWS)._
 
 ## Dependencies
 
@@ -26,9 +30,7 @@ Forge will fulfill its own dependencies, if `pip` is available. If it is not, th
 
 ## Compatibility
 
-Forge testing uses the current Long-Term Support release of Ubuntu. However, it should run on any Linux with Python.
-
-**Forge 1.x is not compatible with Python3.** This is resolvable with a minor change which breaks Python 2.x compatibility.
+Forge runs on Ubuntu 14.04 using python v3.4.3
 
 ## Requirements
 
